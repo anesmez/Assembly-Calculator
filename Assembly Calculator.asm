@@ -224,6 +224,10 @@ JMP FREMETTREOP1B
  MOV AH,09H
  INT 21H
  
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H
+ 
  FERREUROPB:
  
  LEA DX,choix_op 
@@ -455,14 +459,195 @@ INT 21H
    
     
            
-  JMP FP ;fin partie  
+  JMP FP ;fin partie
+       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;hexa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
    teste2:
    cmp base,"h"
    jne teste3 
     ;partie hexa 
+     mov op1HEXA,5
+    mov op2HEXA,5
+    mov HEXAResu,5
+    mov HEXARest,5
+   ;lecture op
+   
+JMP FREMETTREOP1H
      
+    REMETTREOP1H:
+   CALL CLEAR_SCREEN
+    
+   lea dx,messageErreur
+   mov ah,09h
+   int 21h   
+   
+   lea dx,sautligne
+   mov ah,09h
+   int 21h
+   
+   FREMETTREOP1H:
+   
+    
+    lea dx,msgop1
+    mov ah,09h
+    int 21h
+   
+    lea dx,sautligne
+    mov ah,09h
+    int 21h
+    
+    push offset op1HEXA 
+    call lirehexa
+    add sp,2
+    
+    lea dx,op1HEXA
+    push dx
+    call EST_HEXADECIMALE
+    POP AX
+    
+    CMP AX,0
+    Je REMETTREOP1H
+    
+    LEA BX,op1HEXA
+    MOV SI,0
+    MOV AX,0
+    MOV AL,[BX+1]
+    ADD SI,AX
+    ADD SI,2
+    MOV [BX+SI],'$'
+     
+    
+    ;;PUSH OFFSET opBinaire1  ;;;; aremplacer
+    ;;CALL STRING_BINAIRE
+    ;;POP OP1
+    
+    JMP FREMETTREOP2H
+     
+    REMETTREOP2H:
+   CALL CLEAR_SCREEN
+    
+   lea dx,messageErreur
+   mov ah,09h
+   int 21h   
+   
+   lea dx,sautligne
+   mov ah,09h
+   int 21h
+   
+   FREMETTREOP2H:
+   
+    
+    lea dx,msgop2
+    mov ah,09h
+    int 21h
+   
+    lea dx,sautligne
+    mov ah,09h
+    int 21h
+    
+    push offset op2HEXA 
+    call lirehexa
+    add sp,2
+    
+    lea dx,op2HEXA
+    push dx  
+    call EST_HEXADECIMALE
+    POP AX
+    
+    CMP AX,0
+    Je REMETTREOP2H
+    
+    LEA BX,op2HEXA
+    MOV SI,0
+    MOV AX,0
+    MOV AL,[BX+1]
+    ADD SI,AX
+    ADD SI,2
+    MOV [BX+SI],'$'
+    
+    
+    
+    
+    ;;PUSH OFFSET opBinaire2
+    ;;CALL STRING_BINAIRE
+    ;;POP OP2                  ;;aremplacer
+    
+   
+    
+    JMP FERREUROPH
+ ERREUROPH:
+ CALL CLEAR_SCREEN 
+ 
+ LEA DX,messageErreur
+ MOV AH,09H
+ INT 21H
+ 
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H
+ 
+ FERREUROPH:
+ 
+ LEA DX,choix_op 
+ MOV AH,09H
+ INT 21H
+ 
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H
+ 
+ MOV AH,1
+ INT 21h
+ 
+ 
+ 
+ MOV OPERATION,AL 
+ 
+ CALL CLEAR_SCREEN
+ 
+ CMP OPERATION,'+'
+ JNE SOUSTRACTIONH 
+ 
+ 
+ 
+ 
+ JMP FP
+ SOUSTRACTIONH:
+ CMP OPERATION,'-'
+ JNE MULTIPLICATIONH
+ 
+ 
+ 
+ 
+ 
+ JMP FP
+ MULTIPLICATIONH:
+ CMP OPERATION,'*'
+ JNE DIVISIONH
+ 
+     
+
+     
+     
+ 
+ JMP FP
+ DIVISIONH:
+ CMP OPERATION,'/'
+ JNE ERREUROPH
+              
+
       
-   jmp fp ;fin partie    
+   
+    
+           
+  JMP FP ;fin partie
+    
+                 
+                 
+          
+          
+                 
+      
+         ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;decimale;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    teste3:
    cmp base,"d"
    jne erreur
@@ -730,14 +915,16 @@ INT 21H
             Lirebinaire proc
         push ax
         push dx
-        push bp
+        push bp   
+        
         mov bp,sp
         mov dx,[bp+8] 
         mov ah,0Ah
         int 21h
         lea dx,sautligne
         mov ah,09h
-        int 21h
+        int 21h 
+        
         pop bp
         pop dx
         pop ax
@@ -747,30 +934,37 @@ INT 21H
                    
         push ax
         push dx
-        push bp
-        mov bp,sp
-        mov dx,[bp+8]
-        mov ah,0Ah
-        int 21h
-        lea dx,sautligne
-        mov ah,09h
-        int 21h
-        pop bp
-        pop dx
-        pop ax
-        ret
-             endp
-           lirehexa proc
-        push ax
-        push dx
-        push bp
+        push bp  
+        
         mov bp,sp
         mov dx,[bp+8]
         mov ah,0Ah
         int 21h 
+        
         lea dx,sautligne
         mov ah,09h
-        int 21h
+        int 21h  
+        
+        pop bp
+        pop dx
+        pop ax
+        ret
+             endp      
+             
+           lirehexa proc
+        push ax
+        push dx
+        push bp 
+        
+        mov bp,sp
+        mov dx,[bp+8]
+        mov ah,0Ah
+        int 21h    
+        
+        lea dx,sautligne
+        mov ah,09h
+        int 21h  
+        
         pop bp
         pop dx
         pop ax
@@ -909,7 +1103,126 @@ INT 21H
  POP BX
   RET
    ENDP
+
+
+ EST_HEXADECIMALE PROC  ;ON PUSH L'OFFSET DE LA CHAINE EN RETOUNE 1 SI HEXA 0 SI FAUX
+    
+ PUSH BX
+ PUSH AX
+ PUSH CX
+ PUSH SI
+ PUSH BP
  
+ MOV BP,SP
+ 
+ MOV BX,[BP+12]
+ MOV CH,0
+ MOV Cl,[BX+1]
+ MOV SI,2
+ MOV AL,1
+ 
+ VERIFIE_H:
+ 
+ MOV AH,[BX+SI]   ; ON RECUPERE LES CAR
+ 
+ 
+ CMP AH,'0'    ; ONVERIFIE SI ILS SONT DANS L'INTERVALLE
+ JB PAS_H
+ 
+ CMP AH,'9'
+ JA VERCH 
+ 
+ JMP FVERCH
+ VERCH:
+ CMP AH,'A'
+ JB PAS_H
+ 
+ CMP AH,'F'
+ JA PAS_H
+ 
+ FVERCH:
+ INC SI
+ 
+ LOOP VERIFIE_H
+ 
+ JMP FPAS_H
+ PAS_H:
+ MOV AL,0
+ FPAS_H:
+ MOV AH,0
+ 
+ MOV [BP+12],AX
+ 
+ POP BP
+ POP SI
+ POP CX
+ POP AX
+ POP BX
+  RET
+ ENDP
+ 
+ 
+ 
+String_Hex PROC 
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH BP 
+    PUSH SI
+          
+    MOV BP, SP      
+    MOV BX,[BP + 14]
+    MOV CH, 0
+    MOV CL, [BX + 1]
+    MOV DX, 0
+    MOV SI, 2
+    
+    LOOP1:            
+             
+    SHL DX, 4    
+    MOV AL, [BX + SI]
+    SUB AX,30h
+    CMP AX, 9h
+    JG LETTER
+    ADD DX, AX
+    LETTER :
+    SUB AX,7h
+    ADD DX, AX
+    
+    LOOP
+       
+        
+        
+    MOV [BP + ], AX;    
+        
+          
+    POP SI      
+    POP BP
+    POP DX 
+    POP CX
+    POP BX
+    POP AX
+    
+RET 
+ 
+ 
+Hexa_String PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH BP
+    PUSH SI
+    
+     
+    POP SI
+    POP BP
+    POP DX
+    POP CX
+    POP BX
+    POP AX 
+RET 
 
 ; this procedure prints number in AX,
 ; used with PRINT_NUM_UNS to print signed numbers:
