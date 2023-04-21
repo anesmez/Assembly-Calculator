@@ -465,7 +465,7 @@ INT 21H
    cmp base,"h"
    jne teste3 
     ;partie hexa 
-     mov op1HEXA,5
+    mov op1HEXA,5
     mov op2HEXA,5
     mov HEXAResu,5
     mov HEXARest,5
@@ -516,9 +516,9 @@ JMP FREMETTREOP1H
     MOV [BX+SI],'$'
      
     
-    ;;PUSH OFFSET opBinaire1  ;;;; aremplacer
-    ;;CALL STRING_BINAIRE
-    ;;POP OP1
+    PUSH OFFSET op1HEXA 
+    CALL String_Hex
+    POP OP1
     
     JMP FREMETTREOP2H
      
@@ -567,9 +567,9 @@ JMP FREMETTREOP1H
     
     
     
-    ;;PUSH OFFSET opBinaire2
-    ;;CALL STRING_BINAIRE
-    ;;POP OP2                  ;;aremplacer
+    PUSH OFFSET op2HEXA
+    CALL String_Hex
+    POP OP2                 
     
    
     
@@ -607,6 +607,13 @@ JMP FREMETTREOP1H
  CMP OPERATION,'+'
  JNE SOUSTRACTIONH 
  
+ PUSH OP1
+ PUSH OP2
+ CALL ADDITION
+ POP OPRESU
+ POP OPRESU
+ 
+ ;;;;METTRE L'AFFICHAGE
  
  
  
@@ -615,7 +622,13 @@ JMP FREMETTREOP1H
  CMP OPERATION,'-'
  JNE MULTIPLICATIONH
  
+  PUSH OP2
+ PUSH OP1
+ CALL SOUSTRACTION
+ POP OPRESU
+ POP OPRESU
  
+ ;;;METTRE L'AFFICHAGE
  
  
  
@@ -624,7 +637,15 @@ JMP FREMETTREOP1H
  CMP OPERATION,'*'
  JNE DIVISIONH
  
-     
+ PUSH OP1
+PUSH OP2
+
+CALL MUXD
+
+POP OPREST
+POP OPRESU
+
+;;AFFICHAGE    
 
      
      
@@ -634,7 +655,16 @@ JMP FREMETTREOP1H
  CMP OPERATION,'/'
  JNE ERREUROPH
               
+    
+PUSH OP1
+PUSH OP2
 
+CALL DIVISION
+
+POP OPRESU
+POP OPREST 
+
+;;AFFICHAGE
       
    
     
@@ -915,16 +945,14 @@ JMP FREMETTREOP1H
             Lirebinaire proc
         push ax
         push dx
-        push bp   
-        
+        push bp
         mov bp,sp
         mov dx,[bp+8] 
         mov ah,0Ah
         int 21h
         lea dx,sautligne
         mov ah,09h
-        int 21h 
-        
+        int 21h
         pop bp
         pop dx
         pop ax
@@ -934,37 +962,30 @@ JMP FREMETTREOP1H
                    
         push ax
         push dx
-        push bp  
-        
+        push bp
         mov bp,sp
         mov dx,[bp+8]
         mov ah,0Ah
-        int 21h 
-        
+        int 21h
         lea dx,sautligne
         mov ah,09h
-        int 21h  
-        
+        int 21h
         pop bp
         pop dx
         pop ax
         ret
-             endp      
-             
+             endp
            lirehexa proc
         push ax
         push dx
-        push bp 
-        
+        push bp
         mov bp,sp
         mov dx,[bp+8]
         mov ah,0Ah
-        int 21h    
-        
+        int 21h 
         lea dx,sautligne
         mov ah,09h
-        int 21h  
-        
+        int 21h
         pop bp
         pop dx
         pop ax
@@ -1159,70 +1180,7 @@ JMP FREMETTREOP1H
  POP AX
  POP BX
   RET
- ENDP
- 
- 
- 
-String_Hex PROC 
-    PUSH AX
-    PUSH BX
-    PUSH CX
-    PUSH DX
-    PUSH BP 
-    PUSH SI
-          
-    MOV BP, SP      
-    MOV BX,[BP + 14]
-    MOV CH, 0
-    MOV CL, [BX + 1]
-    MOV DX, 0
-    MOV SI, 2
-    
-    LOOP1:            
-             
-    SHL DX, 4    
-    MOV AL, [BX + SI]
-    SUB AX,30h
-    CMP AX, 9h
-    JG LETTER
-    ADD DX, AX
-    LETTER :
-    SUB AX,7h
-    ADD DX, AX
-    
-    LOOP
-       
-        
-        
-    MOV [BP + ], AX;    
-        
-          
-    POP SI      
-    POP BP
-    POP DX 
-    POP CX
-    POP BX
-    POP AX
-    
-RET 
- 
- 
-Hexa_String PROC
-    PUSH AX
-    PUSH BX
-    PUSH CX
-    PUSH DX
-    PUSH BP
-    PUSH SI
-    
-     
-    POP SI
-    POP BP
-    POP DX
-    POP CX
-    POP BX
-    POP AX 
-RET 
+   ENDP 
 
 ; this procedure prints number in AX,
 ; used with PRINT_NUM_UNS to print signed numbers:
@@ -1687,6 +1645,107 @@ DIVISION PROC   ;;OP1 PUIS OP2 FIN:: OP1:RST/OP2/RESU
     POP BX        
              
     RET            
-ENDP
+ENDP 
 
-ENDS
+String_Hex PROC 
+   
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI 
+    PUSH BP
+          
+    MOV BP,SP      
+    MOV BX,[BP + 14]
+    MOV CH, 0
+    MOV CL, [BX + 1]
+    MOV DX,0
+    MOV SI, 2
+    MOV AX,0
+    
+    LOOP1:            
+   
+    ADD DX,DX
+    ADD DX,DX
+    ADD DX,DX
+    ADD DX,DX
+    
+    MOV AL,[BX+SI]
+    
+    CMP AX, 39h
+    JG LETTER
+    SUB AX,30h
+    ADD DX, AX
+    JMP FLETTER
+    LETTER:
+    SUB AX,37h
+    ADD DX, AX 
+    FLETTER:
+    ADD SI,1
+    
+    LOOP LOOP1
+       
+        
+        
+    MOV [BP+ 14], DX;    
+        
+          
+    POP BP      
+    POP SI
+    POP DX 
+    POP CX
+    POP BX
+    POP AX
+    
+    
+RET 
+
+ENDS  
+    
+    
+        
+Print_Hexa PROC
+    PUSH AX      
+    PUSH BX        
+    PUSH CX          
+    PUSH DX            
+    PUSH BP              
+    PUSH SI               
+    
+    MOV BP, SP
+    MOV AX, [BP + 14] 
+    
+    MOV BX, 10h
+    MOV CX, 4
+    
+    print_loop:
+    MOV DX, 0
+    DIV BX
+    PUSH DX
+    DEC CX
+    CMP CX, 0
+    JNZ print_loop
+
+    MOV AH, 2
+    print_digit:
+    POP DX
+    CMP DL, 10
+    JL print_decimal
+    ADD DL, 7
+    print_decimal:
+    ADD DL, 30h
+    INT 21h
+    LOOP print_digit
+    
+    POP SI
+    POP BP
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+ENDP     
+
+
+
+ 
