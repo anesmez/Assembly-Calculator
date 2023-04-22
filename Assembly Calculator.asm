@@ -7,8 +7,8 @@ PUTC    MACRO   char
         POP     AX
 ENDM
 data segment
-    chaine_de_debut db "Calculatrice developpe par XXX $"
-    pkey db "press any key...$"
+    chaine_de_debut db "Calculatrice developpe par ***NASSIM TOUAT ET ANES MEZDOUD***  $"
+    pkey db "Appuie sur 0 pour quitter...$"
     choix_baseB db "tapez b pour le binaire $"
     choix_baseH db "tapez h pour le hexadecimale $"
     choix_baseD db "tapez d pour le decimale $"
@@ -386,6 +386,9 @@ INT 21H
  DIVISIONB:
  CMP OPERATION,'/'
  JNE ERREUROPB
+ 
+ CMP OP2,0
+ JE REMETTREOP2B
               
    
 PUSH OP1
@@ -459,8 +462,11 @@ INT 21H
    
     
            
-  JMP FP ;fin partie
-       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;hexa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
+  JMP FP ;fin partie            
+  
+  
+       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;hexa;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;      
+       
    teste2:
    cmp base,"h"
    jne teste3 
@@ -613,6 +619,32 @@ JMP FREMETTREOP1H
  POP OPRESU
  POP OPRESU
  
+ PUSH OP1
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'+'
+ MOV AH,0EH
+ INT 10H
+ 
+ PUSH OP2
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'='
+ MOV AH,0EH
+ INT 10H
+ 
+  PUSH OPRESU
+ CALL Print_Hexa
+ ADD SP,2
+ 
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H 
+ 
  ;;;;METTRE L'AFFICHAGE
  
  
@@ -627,6 +659,33 @@ JMP FREMETTREOP1H
  CALL SOUSTRACTION
  POP OPRESU
  POP OPRESU
+ 
+  
+ PUSH OP1
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'-'
+ MOV AH,0EH
+ INT 10H
+ 
+ PUSH OP2
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'='
+ MOV AH,0EH
+ INT 10H
+ 
+  PUSH OPRESU
+ CALL Print_Hexa
+ ADD SP,2
+ 
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H
  
  ;;;METTRE L'AFFICHAGE
  
@@ -643,7 +702,39 @@ PUSH OP2
 CALL MUXD
 
 POP OPREST
-POP OPRESU
+POP OPRESU 
+
+ 
+ PUSH OP1
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'*'
+ MOV AH,0EH
+ INT 10H
+ 
+ PUSH OP2
+ CALL Print_Hexa
+ ADD SP,2
+ 
+          
+ MOV AL,'='
+ MOV AH,0EH
+ INT 10H
+ 
+  PUSH OPREST
+ CALL Print_Hexa
+ ADD SP,2
+ 
+  PUSH OPRESU
+ CALL Print_Hexa
+ ADD SP,2
+ 
+ LEA DX,SAUTLIGNE
+ MOV AH,09H
+ INT 21H
+
 
 ;;AFFICHAGE    
 
@@ -654,6 +745,10 @@ POP OPRESU
  DIVISIONH:
  CMP OPERATION,'/'
  JNE ERREUROPH
+ 
+ 
+  CMP OP2,0
+ JE REMETTREOP2H
               
     
 PUSH OP1
@@ -665,7 +760,56 @@ POP OPRESU
 POP OPREST 
 
 ;;AFFICHAGE
-      
+           
+
+
+
+
+PUSH OP1        
+CALL PRINT_HEXA
+ADD SP,2
+
+
+MOV AL,'/'
+MOV AH,0EH
+INT 10H
+
+
+PUSH OP2        
+CALL PRINT_HEXA
+ADD SP,2
+
+
+
+
+
+MOV AL,'='
+MOV AH,0EH
+INT 10H
+
+
+PUSH OPRESU        
+CALL PRINT_HEXA
+ADD SP,2
+
+
+LEA DX,SAUTLIGNE
+MOV AH,09H
+INT 21H
+
+LEA DX,MSG_RST
+MOV AH,09H
+INT 21H
+
+
+PUSH OPREST        
+CALL PRINT_HEXA
+ADD SP,2
+
+
+LEA DX,SAUTLIGNE
+MOV AH,09H
+INT 21H     
    
     
            
@@ -871,6 +1015,9 @@ POP OPREST
  CMP OPERATION,'/'
  JNE ERREUROPD
  
+  CMP OP2,0
+ JE REMETTREOP2D
+ 
  PUSH OP1
  PUSH OP2
  CALL DIVISION
@@ -934,14 +1081,23 @@ POP OPREST
     mov ah, 1
     int 21h
     
-    jmp start
+    CMP AL,'0'
+    JE FINP
+    
+    
+    CALL CLEAR_SCREEN
+    
+    JMP start 
+    
+    FINP:
     
     mov ax, 4c00h ; exit to operating system.
     int 21h
     
 
 
-;debut espace fonction
+;*************************debut espace fonction********************
+
             Lirebinaire proc
         push ax
         push dx
@@ -1699,12 +1855,9 @@ String_Hex PROC
     POP AX
     
     
-RET 
+RET
+ENDP
 
-ENDS  
-    
-    
-        
 Print_Hexa PROC
     PUSH AX      
     PUSH BX        
@@ -1726,7 +1879,7 @@ Print_Hexa PROC
     DEC CX
     CMP CX, 0
     JNZ print_loop
-
+    MOV CX,4
     MOV AH, 2
     print_digit:
     POP DX
@@ -1736,16 +1889,17 @@ Print_Hexa PROC
     print_decimal:
     ADD DL, 30h
     INT 21h
-    LOOP print_digit
+    LOOP print_digit 
+    
+    
     
     POP SI
     POP BP
     POP DX
     POP CX
     POP BX
-    POP AX
-ENDP     
+    POP AX 
+    RET
+ENDP
 
-
-
- 
+ENDS
